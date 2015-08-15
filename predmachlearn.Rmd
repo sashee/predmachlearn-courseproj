@@ -1,0 +1,85 @@
+---
+title: "Practical Machine Learning Course Project - Tamás Sallai"
+output: html_document
+---
+
+## Setting up and loading the data
+
+First, the libraries must be loaded. To greatly speed up the process, muliple cores will be used for the training.
+
+```{r}
+library(caret)
+library(doMC)
+registerDoMC(cores = 4)
+```
+
+Then load the data to the variable _data_.
+
+```{r}
+data <- read.csv('pml-training.csv')
+set.seed(0)
+```
+
+After inspecting the data, there are many NA-only columns and some that are non-numerical. Since the gyroscope and the accelerometer data are all numbers, let's filter out these columns. Also as the first 4 are not measurements but metadata, they should be ignored too.
+
+```{r}
+filtered <- data[,sapply(data, is.numeric) & colSums(is.na(data))==0]
+
+filtered <- filtered[,-(1:4)]
+
+filtered$classe <- data$classe
+```
+
+## Building the model
+
+In order to be able to measure out of sample error rate, let's split the data to a training and a testing set.
+
+```{r}
+inTrain <- createDataPartition(y = filtered$classe, p = .007, list = FALSE)
+
+training <- filtered[inTrain,]
+testing <- filtered[-inTrain,]
+```
+
+The main part is building the model using the training data. In this paper I use the Random Forest approach as it tends to give good results.
+
+```{r}
+modFit <- train(classe ~ ., data = training, method = "rf", model = FALSE)
+```
+
+## Evaluating the model
+
+After we have a model, let's make a table to get a better picture of it's accuracy.
+
+```{r}
+pred <- predict(modFit,testing);
+testing$predRight <- pred == testing$classe
+table(pred, testing$classe)
+```
+
+The in sample error rate:
+
+```{r}
+sum(predict(modFit, training) == training$classe) / nrow(training)
+```
+
+The out of sample error rate:
+
+```{r}
+sum(predict(modFit, testing) == testing$classe) / nrow(testing)
+```
+
+## Validation
+
+The validation data set can be downloaded separately.
+
+```{r}
+validation <- read.csv('pml-testing.csv')
+```
+
+Then the classifications on the data using the previously built model:
+
+```{r}
+pred <- predict(modFit,validation)
+pred
+```
