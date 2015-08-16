@@ -35,7 +35,7 @@ filtered$classe <- data$classe
 In order to be able to measure out of sample error rate, let's split the data to a training and a testing set.
 
 ```{r}
-inTrain <- createDataPartition(y = filtered$classe, p = .007, list = FALSE)
+inTrain <- createDataPartition(y = filtered$classe, p = .7, list = FALSE)
 
 training <- filtered[inTrain,]
 testing <- filtered[-inTrain,]
